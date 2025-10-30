@@ -1,0 +1,7 @@
+streamlit
+pandas
+gspread
+gspread-dataframe
+openpyxl
+numpy
+plotly
