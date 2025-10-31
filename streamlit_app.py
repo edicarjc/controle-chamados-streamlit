@@ -59,8 +59,8 @@ def carregar_dados_do_sheets():
     df = df.dropna(subset=['ID Chamado']).reset_index(drop=True) 
     
     if not df.empty:
-         df['ID Chamado'] = df['ID Chamado'].astype(str).str.replace(r'\.0$', '', regex=True)
-         df = df.replace(r'^\s*$', np.nan, regex=True).fillna('') 
+          df['ID Chamado'] = df['ID Chamado'].astype(str).str.replace(r'\.0$', '', regex=True)
+          df = df.replace(r'^\s*$', np.nan, regex=True).fillna('') 
 
     return df
 
@@ -174,15 +174,36 @@ def reset_form_defaults():
         if key in st.session_state:
             del st.session_state[key] 
             
-# 🟢 NOVA FUNÇÃO: Callback para resetar estados de busca após edição/inclusão
+# 🟢 FUNÇÃO CORRIGIDA: Usa 'del' para evitar a StreamlitAPIException
 def handle_successful_save(id_do_registro):
-    """Função de callback para ser chamada APÓS um salvamento bem-sucedido."""
+    """
+    Função de callback para ser chamada APÓS um salvamento bem-sucedido.
+    Usa 'del' para limpar os estados de busca de edição e evitar o erro APIException.
+    """
     # 1. Configura o ID para a confirmação visual
     st.session_state.last_saved_id = str(id_do_registro)
     
-    # 2. Auto-reset da busca e do select (Resolve o StreamlitAPIException)
-    st.session_state.search_input_edit = "" 
-    st.session_state.filtered_id_to_edit = 'Selecione...' 
+    # 2. Limpeza Segura do Estado de Edição (CORREÇÃO)
+    # Remove as chaves do estado da sessão para limpar os widgets de busca de forma segura
+    
+    # Limpa o input de busca na tela de edição
+    if 'search_input_edit' in st.session_state:
+        del st.session_state.search_input_edit
+        
+    # Limpa o ID que foi selecionado para edição, para não aparecer mais
+    if 'filtered_id_to_edit' in st.session_state:
+        st.session_state.filtered_id_to_edit = 'Selecione...' # Re-set para o valor padrão
+    
+    # Limpa a lista de múltiplos IDs filtrados
+    if 'multi_filtered_ids' in st.session_state:
+        del st.session_state.multi_filtered_ids
+        
+    # Limpa o input de busca (se houver na tela de registro)
+    if 'search_input_register' in st.session_state:
+        del st.session_state.search_input_register
+        
+    # O st.rerun() no final do form fará o resto.
+    # Não usamos st.experimental_rerun() aqui, pois o form já fará o st.rerun().
 
 
 def buscar_id_para_edicao():
@@ -297,12 +318,12 @@ def show_main_content(df_calculado):
             
             id_list = st.session_state.dados_chamados['ID Chamado'].astype(str).str.strip().tolist()
             if validado and id_chamado.strip() in id_list:
-                 st.error(f"Erro: O ID de Chamado '{id_chamado}' já existe na base de dados. Por favor, verifique.")
-                 validado = False
+                st.error(f"Erro: O ID de Chamado '{id_chamado}' já existe na base de dados. Por favor, verifique.")
+                validado = False
             
             if compl_aberto == "SIM" and not id_compl_aberto:
-                 st.error("Regra de Negócio: Se 'Complementar Aberto?' é SIM, o campo 'ID Compl. Aberto' é obrigatório.")
-                 validado = False
+                st.error("Regra de Negócio: Se 'Complementar Aberto?' é SIM, o campo 'ID Compl. Aberto' é obrigatório.")
+                validado = False
 
             if validado:
                 dados_novo_chamado = {
@@ -365,7 +386,7 @@ def show_main_content(df_calculado):
             col_t1, col_t2 = st.columns([4, 1])
             
             with col_t1:
-                 st.markdown("##### Dados Calculados e Formatados por SLA:")
+                st.markdown("##### Dados Calculados e Formatados por SLA:")
             
             with col_t2:
                 filtro_alerta = st.checkbox("Apenas ALERTA", value=False)
@@ -408,9 +429,15 @@ def show_main_content(df_calculado):
             use_container_width=True
         )
         # 🟢 Botão para limpar a busca (usando on_click para resetar estados)
+        # O reset_search_state é uma função lambda simples para limpar a busca e a seleção
+        def reset_search_state():
+            if 'search_input_edit' in st.session_state:
+                del st.session_state.search_input_edit
+            st.session_state.filtered_id_to_edit = 'Selecione...'
+
         st.button(
             "Limpar Busca", 
-            on_click=lambda: st.session_state.update(search_input_edit="", filtered_id_to_edit="Selecione..."),
+            on_click=reset_search_state,
             use_container_width=True
         )
 
@@ -499,8 +526,8 @@ def show_main_content(df_calculado):
                     validado_edicao = False
                 
                 if novo_compl_aberto == "SIM" and not novo_id_compl_aberto:
-                     st.error("Regra de Negócio: Se 'Complementar Aberto?' é SIM, o campo 'ID Compl. Aberto' é obrigatório.")
-                     validado_edicao = False
+                    st.error("Regra de Negócio: Se 'Complementar Aberto?' é SIM, o campo 'ID Compl. Aberto' é obrigatório.")
+                    validado_edicao = False
 
                 if validado_edicao:
                     df_completo.loc[idx, 'Hora Final'] = nova_hora_final.strftime('%H:%M')
