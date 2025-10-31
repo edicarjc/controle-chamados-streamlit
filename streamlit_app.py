@@ -174,25 +174,24 @@ def reset_form_defaults():
         if key in st.session_state:
             del st.session_state[key] 
             
-# 🟢 FUNÇÃO CORRIGIDA: Usa 'del' para evitar a StreamlitAPIException
+# 🟢 FUNÇÃO CORRIGIDA: Usa 'del' para evitar a StreamlitAPIException (O ERRO NA EDIÇÃO ESTAVA AQUI)
 def handle_successful_save(id_do_registro):
     """
     Função de callback para ser chamada APÓS um salvamento bem-sucedido.
-    Usa 'del' para limpar os estados de busca de edição e evitar o erro APIException.
+    Usa 'del' para limpar os estados de busca de edição de forma segura.
     """
     # 1. Configura o ID para a confirmação visual
     st.session_state.last_saved_id = str(id_do_registro)
     
     # 2. Limpeza Segura do Estado de Edição (CORREÇÃO)
-    # Remove as chaves do estado da sessão para limpar os widgets de busca de forma segura
     
-    # Limpa o input de busca na tela de edição
+    # Limpa o input de busca na tela de edição (ANTES ERA: st.session_state.search_input_edit = "")
     if 'search_input_edit' in st.session_state:
         del st.session_state.search_input_edit
         
-    # Limpa o ID que foi selecionado para edição, para não aparecer mais
+    # Limpa a seleção do ID que estava sendo editado
     if 'filtered_id_to_edit' in st.session_state:
-        st.session_state.filtered_id_to_edit = 'Selecione...' # Re-set para o valor padrão
+        st.session_state.filtered_id_to_edit = 'Selecione...'
     
     # Limpa a lista de múltiplos IDs filtrados
     if 'multi_filtered_ids' in st.session_state:
@@ -203,7 +202,6 @@ def handle_successful_save(id_do_registro):
         del st.session_state.search_input_register
         
     # O st.rerun() no final do form fará o resto.
-    # Não usamos st.experimental_rerun() aqui, pois o form já fará o st.rerun().
 
 
 def buscar_id_para_edicao():
@@ -429,7 +427,7 @@ def show_main_content(df_calculado):
             use_container_width=True
         )
         # 🟢 Botão para limpar a busca (usando on_click para resetar estados)
-        # O reset_search_state é uma função lambda simples para limpar a busca e a seleção
+        # Define a função lambda para limpar o estado
         def reset_search_state():
             if 'search_input_edit' in st.session_state:
                 del st.session_state.search_input_edit
