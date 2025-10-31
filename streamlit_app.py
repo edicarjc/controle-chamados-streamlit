@@ -174,33 +174,29 @@ def reset_form_defaults():
         if key in st.session_state:
             del st.session_state[key] 
             
-# 🟢 FUNÇÃO CORRIGIDA: Usa 'del' para evitar a StreamlitAPIException (O ERRO NA EDIÇÃO ESTAVA AQUI)
+# 🟢 FUNÇÃO CORRIGIDA: Manipula session_state de forma segura
 def handle_successful_save(id_do_registro):
     """
     Função de callback para ser chamada APÓS um salvamento bem-sucedido.
-    Usa 'del' para limpar os estados de busca de edição de forma segura.
+    Manipula st.session_state de forma segura para evitar StreamlitAPIException.
     """
     # 1. Configura o ID para a confirmação visual
     st.session_state.last_saved_id = str(id_do_registro)
     
-    # 2. Limpeza Segura do Estado de Edição (CORREÇÃO)
+    # 2. Limpeza segura do estado de edição (cria/atribui sem deletar)
+    # Garante que a chave exista antes de alterar — evita condições de corrida com reruns.
+    st.session_state.setdefault("search_input_edit", "")
+    st.session_state.search_input_edit = ""
     
-    # Limpa o input de busca na tela de edição (ANTES ERA: st.session_state.search_input_edit = "")
-    if 'search_input_edit' in st.session_state:
-        del st.session_state.search_input_edit
-        
-    # Limpa a seleção do ID que estava sendo editado
-    if 'filtered_id_to_edit' in st.session_state:
-        st.session_state.filtered_id_to_edit = 'Selecione...'
+    st.session_state.setdefault("filtered_id_to_edit", "Selecione...")
+    st.session_state.filtered_id_to_edit = "Selecione..."
     
-    # Limpa a lista de múltiplos IDs filtrados
-    if 'multi_filtered_ids' in st.session_state:
-        del st.session_state.multi_filtered_ids
-        
-    # Limpa o input de busca (se houver na tela de registro)
-    if 'search_input_register' in st.session_state:
-        del st.session_state.search_input_register
-        
+    if "multi_filtered_ids" in st.session_state:
+        del st.session_state["multi_filtered_ids"]
+    
+    st.session_state.setdefault("search_input_register", "")
+    st.session_state.search_input_register = ""
+    
     # O st.rerun() no final do form fará o resto.
 
 
